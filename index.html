@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#11111a">
+<meta name="description" content="A mobile-first AI drama studio prototype for creating stories, characters, episodes, and scene plans.">
+<link rel="manifest" href="manifest.json">
+<title>DramaForge Studio</title>
+<style>
+:root{--bg:#0e0e16;--panel:#171722;--panel2:#20202d;--text:#f5f4fa;--muted:#aaa9bd;--line:#303043;--accent:#b9a2ff;--accent2:#f4b4d8;--good:#a8e6c1;--danger:#ffb4b4}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 85% -10%,#30234c 0,transparent 35%),var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,input,textarea,select{font:inherit}button{cursor:pointer}
+.app{max-width:900px;margin:auto;min-height:100dvh;padding:0 15px 100px}
+header{padding:22px 2px 15px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;gap:11px;align-items:center}.logo{width:43px;height:43px;border-radius:14px;background:linear-gradient(135deg,#c3a7ff,#ffb9dc);display:grid;place-items:center;color:#171222;font-size:23px;font-weight:900}
+h1{font-size:20px;margin:0;letter-spacing:-.5px}header p{margin:2px 0 0;color:var(--muted);font-size:12px}.pill{border:1px solid var(--line);color:var(--muted);border-radius:99px;padding:6px 10px;font-size:11px;white-space:nowrap}
+.hero{padding:22px;border:1px solid #3a3151;border-radius:22px;background:linear-gradient(130deg,#211a34,#171722 70%);margin-bottom:18px}
+.eyebrow{color:var(--accent);font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase}
+.hero h2{font-size:27px;line-height:1.1;margin:10px 0}.hero p{color:#c5c2d6;margin:0 0 17px;max-width:580px}
+.primary,.secondary,.ghost,.danger{border:0;border-radius:12px;padding:12px 15px;font-weight:750}
+.primary{background:var(--accent);color:#171222}.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}.danger{background:#47232c;color:#ffd9df}
+button:active{transform:scale(.985)}.actions{display:flex;gap:9px;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:14px 0 23px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:13px}.stat strong{display:block;font-size:22px}.stat span{color:var(--muted);font-size:12px}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:23px 0 12px}.section-head h3{margin:0;font-size:17px}.section-head small{color:var(--muted)}
+.tabs{position:fixed;z-index:5;bottom:0;left:0;right:0;padding:10px max(12px,calc((100vw - 870px)/2)) calc(10px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:#101019ed;backdrop-filter:blur(16px);border-top:1px solid var(--line)}
+.tab{background:transparent;border:0;color:var(--muted);padding:8px 2px;border-radius:11px;font-size:11px}.tab span{display:block;font-size:19px;margin-bottom:2px}.tab.active{background:#29223a;color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.card{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:15px;min-width:0}.card h4{margin:0 0 7px;font-size:15px}.card p{margin:0;color:var(--muted);font-size:13px;overflow-wrap:anywhere}.card .meta{font-size:11px;color:var(--accent);margin-bottom:8px}.card-actions{display:flex;gap:7px;margin-top:13px}.card-actions button{flex:1;padding:9px 7px;font-size:12px}
+form{display:grid;gap:13px}.field{display:grid;gap:6px}.field label{color:#d4d1e2;font-size:12px;font-weight:700}.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);background:#101019;color:var(--text);padding:12px;border-radius:11px;outline:none}.field textarea{min-height:95px;resize:vertical}.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--accent)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.notice{padding:12px 13px;background:#1d2b26;border:1px solid #304d40;color:#c9f1d9;border-radius:12px;font-size:12px}.warning{background:#2d261a;border-color:#51422b;color:#f4dfad}
+.empty{padding:28px 18px;text-align:center;border:1px dashed #454257;border-radius:17px;color:var(--muted)}.empty b{display:block;color:var(--text);margin-bottom:5px}
+.output{white-space:pre-wrap;overflow-wrap:anywhere;background:#101019;border:1px solid var(--line);border-radius:13px;padding:15px;font-size:13px;line-height:1.65;max-height:none}
+.list{display:grid;gap:10px}.project{display:flex;align-items:flex-start;gap:12px}.project-icon{width:43px;height:48px;flex-shrink:0;border-radius:11px;background:linear-gradient(145deg,#302543,#20202d);display:grid;place-items:center;font-size:20px}.project-main{flex:1;min-width:0}.project-main h4{margin:0 0 4px}.project-main p{margin:0;color:var(--muted);font-size:12px}.tag{display:inline-block;margin-top:8px;padding:4px 7px;border-radius:7px;background:#29223a;color:var(--accent);font-size:10px}
+.modal{position:fixed;z-index:10;inset:0;background:#0009;display:none;align-items:flex-end;justify-content:center;padding:14px}.modal.show{display:flex}.sheet{width:min(100%,700px);max-height:90dvh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px}.sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.sheet-head h3{margin:0}.close{background:transparent;color:var(--muted);border:0;font-size:25px}
+footer{color:#77768a;text-align:center;font-size:11px;margin-top:24px}
+@media(min-width:650px){.app{padding-left:24px;padding-right:24px}.hero{padding:28px}.hero h2{font-size:34px}.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.tabs{position:static;margin:10px 0 20px;border:1px solid var(--line);border-radius:15px;padding:7px;background:#15151f}.tab{font-size:12px}.tab span{display:inline;margin-right:7px}.modal{align-items:center}}
+@media(max-width:380px){.grid{grid-template-columns:1fr}.hero h2{font-size:24px}.pill{display:none}.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="brand"><div class="logo">▶</div><div><h1>DramaForge</h1><p>Mobile AI drama studio · Prototype</p></div></div>
+  <span class="pill">BETA · LOCAL SAVE</span>
+</header>
+<nav class="tabs" aria-label="Main navigation">
+  <button class="tab active" data-page="home"><span>⌂</span>Home</button>
+  <button class="tab" data-page="projects"><span>▣</span>Projects</button>
+  <button class="tab" data-page="create"><span>✦</span>Create</button>
+  <button class="tab" data-page="library"><span>☷</span>Library</button>
+</nav>
+<main id="main"></main>
+<footer>Prototype 0.1 · Your saved projects stay on this device. Generated text is a starter draft, not a connected AI model yet.</footer>
+</div>
+<div class="modal" id="modal"><div class="sheet"><div class="sheet-head"><h3 id="modalTitle">Details</h3><button class="close" id="closeModal" aria-label="Close">×</button></div><div id="modalBody"></div></div></div>
+<script>
+const KEY='dramaforge_projects_v1';
+const $=s=>document.querySelector(s);
+let page='home', activeProject=null;
+let projects=[];
+try{projects=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){projects=[]}
+const genres=['Romance','Revenge','Fantasy','Horror','Thriller','Comedy','Sci-fi','Crime','Melodrama','Action','Mystery','Dark fantasy'];
+const moods=['Emotional','Dark','Hopeful','Chaotic','Suspenseful','Funny','Epic','Gritty'];
+function save(){localStorage.setItem(KEY,JSON.stringify(projects))}
+function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function dateLabel(t){return new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric'})}
+function projectCard(p){return `<article class="card"><div class="meta">${esc(p.genre||'Drama')} · ${dateLabel(p.updated||p.created)}</div><h4>${esc(p.title)}</h4><p>${esc(p.logline||'No logline yet.')}</p><div class="card-actions"><button class="secondary" onclick="openProject('${p.id}')">Open</button><button class="ghost" onclick="deleteProject('${p.id}')">Delete</button></div></article>`}
+function setPage(next){page=next;document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.page===page));render()}
+function render(){
+ const main=$('#main');
+ if(page==='home'){
+  main.innerHTML=`<section class="hero"><div class="eyebrow">Your story. Your studio.</div><h2>Turn a wild idea into a drama universe.</h2><p>Plan stories, build characters, outline episodes, and prepare scenes for AI video tools—all from your phone.</p><div class="actions"><button class="primary" onclick="setPage('create')">＋ Create a drama</button><button class="secondary" onclick="setPage('projects')">View projects</button></div></section>
+  <div class="stats"><div class="stat"><strong>${projects.length}</strong><span>Projects</span></div><div class="stat"><strong>${projects.reduce((n,p)=>n+(p.characters||[]).length,0)}</strong><span>Characters</span></div><div class="stat"><strong>${projects.reduce((n,p)=>n+(p.episodes||[]).length,0)}</strong><span>Episodes</span></div></div>
+  <div class="section-head"><h3>Recent projects</h3><small>${projects.length?'Saved on this device':'Start your first story'}</small></div>
+  ${projects.length?`<div class="grid">${projects.slice().sort((a,b)=>(b.updated||b.created)-(a.updated||a.created)).slice(0,4).map(projectCard).join('')}</div>`:`<div class="empty"><b>Your studio is empty—for now.</b>Create a drama project to start building its world.</div>`}
+  <div class="section-head"><h3>What this prototype can do</h3></div><div class="grid"><div class="card"><h4>✦ Story starters</h4><p>Turn a premise into a structured starter outline.</p></div><div class="card"><h4>♙ Character bible</h4><p>Save names, goals, secrets, and relationships.</p></div><div class="card"><h4>▤ Episode planner</h4><p>Draft episode beats and cliffhangers.</p></div></div>`;
+ }else if(page==='projects'){
+  main.innerHTML=`<div class="section-head"><h3>Your projects</h3><button class="primary" onclick="setPage('create')">＋ New</button></div>${projects.length?`<div class="grid">${projects.map(projectCard).join('')}</div>`:`<div class="empty"><b>No projects yet</b>Start a new drama and it will appear here.</div>`}`;
+ }else if(page==='create'){
+  main.innerHTML=`<div class="section-head"><h3>Create a drama</h3><small>Step 1 of your production pipeline</small></div><div class="notice warning">This first version creates and saves a structured draft locally. Live AI generation will be connected in a later version.</div><br>
+  <form id="createForm"><div class="field"><label for="title">Drama title</label><input id="title" required maxlength="80" placeholder="e.g. The Heir's Last Secret"></div>
+  <div class="field"><label for="premise">Your idea / premise</label><textarea id="premise" required maxlength="2000" placeholder="A disgraced heir returns to a city that believes them dead..."></textarea></div>
+  <div class="two"><div class="field"><label for="genre">Genre</label><select id="genre">${genres.map(x=>`<option>${x}</option>`).join('')}</select></div><div class="field"><label for="mood">Tone</label><select id="mood">${moods.map(x=>`<option>${x}</option>`).join('')}</select></div></div>
+  <div class="two"><div class="field"><label for="episodes">Episode count</label><select id="episodes">${[3,5,10,20,30].map(x=>`<option value="${x}" ${x===5?'selected':''}>${x} episodes</option>`).join('')}</select></div><div class="field"><label for="length">Episode length</label><select id="length"><option value="30–60 seconds">30–60 seconds</option><option value="1–3 minutes">1–3 minutes</option><option value="3–5 minutes">3–5 minutes</option><option value="10+ minutes">10+ minutes</option></select></div></div>
+  <button class="primary" type="submit">✦ Generate starter pack</button></form>`;
+  $('#createForm').addEventListener('submit',createProject);
+ }else if(page==='library'){
+  main.innerHTML=`<div class="section-head"><h3>Creative library</h3><small>Reusable writing tools</small></div><div class="grid">
+  <div class="card"><div class="meta">PROMPT TOOL</div><h4>Drama premise expander</h4><p>Use a simple structure to strengthen an idea.</p><div class="card-actions"><button class="secondary" onclick="showPrompt('premise')">Open tool</button></div></div>
+  <div class="card"><div class="meta">PROMPT TOOL</div><h4>Character builder</h4><p>Build a character with a want, need, flaw, secret, and arc.</p><div class="card-actions"><button class="secondary" onclick="showPrompt('character')">Open tool</button></div></div>
+  <div class="card"><div class="meta">PROMPT TOOL</div><h4>Cliffhanger builder</h4><p>End an episode with a reveal, reversal, or urgent choice.</p><div class="card-actions"><button class="secondary" onclick="showPrompt('cliffhanger')">Open tool</button></div></div>
+  <div class="card"><div class="meta">EXPORT</div><h4>Export project data</h4><p>Download a JSON backup of your projects.</p><div class="card-actions"><button class="secondary" onclick="exportData()">Export JSON</button></div></div>
+  <div class="card"><div class="meta">IMPORT</div><h4>Restore a backup</h4><p>Load a previous DramaForge JSON backup.</p><div class="card-actions"><button class="secondary" onclick="$('#importFile').click()">Choose file</button><input id="importFile" type="file" accept=".json,application/json" hidden onchange="importData(event)"></div></div>
+  <div class="card"><div class="meta">RESET</div><h4>Clear local projects</h4><p>This removes projects stored in this browser.</p><div class="card-actions"><button class="danger" onclick="clearData()">Clear data</button></div></div>
+  </div>`;
+ }
+}
+function createProject(e){
+ e.preventDefault();
+ const title=$('#title').value.trim(), premise=$('#premise').value.trim(), genre=$('#genre').value, mood=$('#mood').value, count=Number($('#episodes').value), length=$('#length').value;
+ const p={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),title,premise,genre,mood,count,length,created:Date.now(),updated:Date.now(),logline:premise.slice(0,150),characters:[],episodes:[]};
+ p.story=makeStory(p);projects.unshift(p);save();activeProject=p.id;openProject(p.id);
+}
+function makeStory(p){
+ const n=p.count;
+ const hooks=[
+ 'A discovery makes the protagonist question everything they believe.',
+ 'An ally reveals a hidden motive, changing the balance of power.',
+ 'The protagonist wins publicly but loses something deeply personal.',
+ 'A secret from the past threatens to destroy a fragile alliance.',
+ 'A seemingly minor character reveals unexpected influence.',
+ 'The antagonist offers a deal that could solve one problem and create a worse one.',
+ 'A betrayal forces the protagonist to choose between love and survival.',
+ 'Evidence points toward the wrong person—until one detail changes everything.',
+ 'The protagonist discovers the conflict is larger than they imagined.',
+ 'A final revelation reframes the opening scene and launches the next chapter.'
+ ];
+ let out=`${p.title.toUpperCase()} — STARTER STORY PACK\n\nGENRE: ${p.genre}\nTONE: ${p.mood}\nFORMAT: ${n} episodes · ${p.length} each\n\nCORE PREMISE\n${p.premise}\n\nSERIES ENGINE\nEach episode should move the central conflict forward, reveal a new piece of character information, and end on a strong emotional or plot question. Keep the main characters' goals and visual traits consistent.\n\nEPISODE OUTLINE\n`;
+ for(let i=1;i<=n;i++){let hook=hooks[(i-1)%hooks.length];out+=`\nEPISODE ${i}: ${episodeTitle(i,p.genre)}\n• Opening hook: Start with a striking image, urgent decision, or unanswered question.\n• Escalation: The premise creates a concrete obstacle for the protagonist.\n• Character beat: Reveal a desire, fear, contradiction, or relationship shift.\n• Turn: ${hook}\n• Cliffhanger: End on a new danger, a revelation, or a choice that cannot be undone.\n`}
+ out+=`\nVISUAL DIRECTION\n• Aspect ratio: 9:16 vertical for mobile-first drama.\n• Use readable close-ups, clear eyelines, simple geography, and motivated camera moves.\n• Repeat character descriptions and wardrobe details in every visual prompt to improve consistency.\n• Keep dialogue concise and let reaction shots carry emotional beats.\n\nNEXT STEP\nAdd your main characters in the project editor, then expand each episode into 3–8 individual scenes. This is a template-based starter draft; connect a language model for truly customized AI-written material.`;
+ return out;
+}
+function episodeTitle(i,g){const titles=['The Unexpected Return','A Promise in the Dark','The Price of Trust','A Door Left Open','The Hidden Witness','A Dangerous Offer','Blood and Secrets','The False Victory','No Way Back','The Truth Beneath'];return titles[(i-1)%titles.length]}
+function openProject(id){
+ const p=projects.find(x=>x.id===id);if(!p)return;activeProject=id;
+ showModal(p.title,`<div class="meta">${esc(p.genre)} · ${p.count} episodes · ${esc(p.length)}</div><div class="field"><label>Premise</label><textarea id="editPremise">${esc(p.premise)}</textarea></div><div class="two"><div class="field"><label>Genre</label><select id="editGenre">${genres.map(x=>`<option ${x===p.genre?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><label>Tone</label><select id="editMood">${moods.map(x=>`<option ${x===p.mood?'selected':''}>${x}</option>`).join('')}</select></div></div>
+ <div class="actions" style="margin:13px 0"><button class="primary" onclick="saveProjectEdits('${p.id}')">Save details</button><button class="secondary" onclick="showStory('${p.id}')">View story pack</button><button class="secondary" onclick="addCharacter('${p.id}')">＋ Character</button><button class="secondary" onclick="addEpisode('${p.id}')">＋ Episode note</button><button class="ghost" onclick="downloadStory('${p.id}')">Export .txt</button></div>
+ <div class="section-head"><h3>Characters (${(p.characters||[]).length})</h3></div>${(p.characters||[]).length?p.characters.map((c,i)=>`<div class="card" style="margin-bottom:8px"><h4>${esc(c.name)}</h4><p>${esc(c.description)}</p><span class="tag">${esc(c.role||'Character')}</span><button class="ghost" style="float:right;padding:5px 8px" onclick="removeCharacter('${p.id}',${i})">Remove</button></div>`).join(''):'<p style="color:var(--muted)">No characters yet. Add your first character.</p>'}
+ <div class="section-head"><h3>Episode notes (${(p.episodes||[]).length})</h3></div>${(p.episodes||[]).length?p.episodes.map((ep,i)=>`<div class="card" style="margin-bottom:8px"><h4>Episode ${i+1}: ${esc(ep.title)}</h4><p>${esc(ep.note)}</p></div>`).join(''):'<p style="color:var(--muted)">Add notes for individual episodes as you develop them.</p>'}`);
+}
+function saveProjectEdits(id){const p=projects.find(x=>x.id===id);if(!p)return;p.premise=$('#editPremise').value.trim();p.logline=p.premise.slice(0,150);p.genre=$('#editGenre').value;p.mood=$('#editMood').value;p.updated=Date.now();p.story=makeStory(p);save();openProject(id)}
+function showStory(id){const p=projects.find(x=>x.id===id);if(!p)return;showModal('Story pack',`<div class="actions" style="margin-bottom:12px"><button class="primary" onclick="downloadStory('${id}')">Download .txt</button><button class="secondary" onclick="copyText('${id}')">Copy text</button></div><div class="output">${esc(p.story||makeStory(p))}</div>`)}
+function addCharacter(id){const p=projects.find(x=>x.id===id);if(!p)return;showModal('Add character',`<form id="charForm"><div class="field"><label>Name</label><input id="charName" required maxlength="80" placeholder="Character name"></div><div class="field"><label>Role</label><select id="charRole"><option>Protagonist</option><option>Antagonist</option><option>Love interest</option><option>Ally</option><option>Rival</option><option>Supporting character</option></select></div><div class="field"><label>Description, goal, secret, or visual traits</label><textarea id="charDesc" required placeholder="What do they want? What are they hiding? What do they look like?"></textarea></div><button class="primary" type="submit">Save character</button></form>`);$('#charForm').addEventListener('submit',e=>{e.preventDefault();p.characters.push({name:$('#charName').value.trim(),role:$('#charRole').value,description:$('#charDesc').value.trim()});p.updated=Date.now();save();openProject(id)})}
+function addEpisode(id){const p=projects.find(x=>x.id===id);if(!p)return;showModal('Add episode note',`<form id="epForm"><div class="field"><label>Episode title</label><input id="epTitle" required placeholder="The Secret Comes Out"></div><div class="field"><label>Scene beats / notes</label><textarea id="epNote" required placeholder="Opening hook, conflict, turning point, cliffhanger..."></textarea></div><button class="primary" type="submit">Save episode note</button></form>`);$('#epForm').addEventListener('submit',e=>{e.preventDefault();p.episodes.push({title:$('#epTitle').value.trim(),note:$('#epNote').value.trim()});p.updated=Date.now();save();openProject(id)})}
+function removeCharacter(id,i){const p=projects.find(x=>x.id===id);if(!p)return;p.characters.splice(i,1);save();openProject(id)}
+function deleteProject(id){if(!confirm('Delete this project from this device?'))return;projects=projects.filter(p=>p.id!==id);save();render()}
+function showPrompt(type){
+ const data={
+ premise:['Premise expander','Take this premise and expand it into: (1) a one-sentence logline, (2) protagonist and goal, (3) central conflict, (4) antagonist pressure, (5) emotional stakes, (6) 3 escalating twists, and (7) a season-ending reveal. Keep the original idea recognizable.'],
+ character:['Character builder','Create a layered drama character. Include: name, role, visual design, public mask, private desire, greatest fear, flaw, secret, relationship tensions, moral boundary, and how they change over the season. Avoid making every trait fit neatly together; give them contradictions.'],
+ cliffhanger:['Cliffhanger builder','Write 10 distinct cliffhangers for the episode described by the user: a shocking revelation, sudden reversal, urgent danger, emotional confession, betrayal, impossible choice, identity reveal, apparent death, interrupted action, and a quiet but unsettling discovery. Make each cliffhanger feel earned.']
+ }[type];
+ showModal(data[0],`<div class="output" id="promptText">${esc(data[1])}</div><div class="actions" style="margin-top:12px"><button class="primary" onclick="copyPrompt('${type}')">Copy prompt</button></div><p style="color:var(--muted);font-size:12px;margin-top:12px">Paste this into an AI writing tool when you want a richer draft. Live AI is not connected in this prototype.</p>`)
+}
+function copyPrompt(type){const map={premise:'Expand this drama premise into a logline, protagonist, conflict, antagonist, stakes, 3 twists, and season-ending reveal. Preserve the core idea.',character:'Create a layered character with name, role, visual design, public mask, desire, fear, flaw, secret, relationships, moral boundary, and character arc.',cliffhanger:'Generate 10 earned cliffhangers for this episode: revelation, reversal, danger, confession, betrayal, impossible choice, identity reveal, apparent death, interrupted action, unsettling discovery.'};copyToClipboard(map[type])}
+function copyText(id){const p=projects.find(x=>x.id===id);if(p)copyToClipboard(p.story||makeStory(p))}
+function copyToClipboard(s){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(s).then(()=>alert('Copied to clipboard.')).catch(()=>fallbackCopy(s))}else fallbackCopy(s)}
+function fallbackCopy(s){const t=document.createElement('textarea');t.value=s;document.body.appendChild(t);t.select();try{document.execCommand('copy');alert('Copied to clipboard.')}catch(e){alert('Copy unavailable. Use Export .txt instead.')}t.remove()}
+function downloadStory(id){const p=projects.find(x=>x.id===id);if(!p)return;download(`${safeName(p.title)}-story-pack.txt`,p.story||makeStory(p),'text/plain;charset=utf-8')}
+function safeName(s){return (s||'drama').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,45)||'drama'}
+function download(name,data,type){const blob=new Blob([data],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function exportData(){download('dramaforge-backup.json',JSON.stringify(projects,null,2),'application/json')}
+function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d))throw Error();projects=d;save();render();alert('Backup restored.')}catch(err){alert('That file is not a valid DramaForge backup.')}};r.readAsText(f)}
+function clearData(){if(!confirm('Permanently clear all DramaForge projects stored in this browser? Export a backup first if needed.'))return;projects=[];save();render()}
+function showModal(title,body){$('#modalTitle').textContent=title;$('#modalBody').innerHTML=body;$('#modal').classList.add('show')}
+function closeModal(){$('#modal').classList.remove('show')}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>setPage(b.dataset.page)));
+$('#closeModal').addEventListener('click',closeModal);$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+if('serviceWorker'in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+render();
+</script>
+</body>
+</html>

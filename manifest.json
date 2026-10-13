@@ -1,0 +1,11 @@
+{
+  "name": "DramaForge Studio",
+  "short_name": "DramaForge",
+  "description": "Mobile-first drama planning studio prototype",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0e0e16",
+  "theme_color": "#11111a",
+  "icons": []
+}
