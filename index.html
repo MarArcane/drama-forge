@@ -50,7 +50,7 @@ footer{color:#77768a;text-align:center;font-size:11px;margin-top:24px}
   <button class="tab" data-page="library"><span>☷</span>Library</button>
 </nav>
 <main id="main"></main>
-<footer>Prototype 0.1 · Your saved projects stay on this device. Generated text is a starter draft, not a connected AI model yet.</footer>
+<footer>Prototype 0.2 · Expanded genres · Your saved projects stay on this device. Generated text is a starter draft, not a connected AI model yet.</footer>
 </div>
 <div class="modal" id="modal"><div class="sheet"><div class="sheet-head"><h3 id="modalTitle">Details</h3><button class="close" id="closeModal" aria-label="Close">×</button></div><div id="modalBody"></div></div></div>
 <script>
@@ -59,7 +59,7 @@ const $=s=>document.querySelector(s);
 let page='home', activeProject=null;
 let projects=[];
 try{projects=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){projects=[]}
-const genres=['Romance','Revenge','Fantasy','Horror','Thriller','Comedy','Sci-fi','Crime','Melodrama','Action','Mystery','Dark fantasy'];
+const genres=['Romance','Romantic Comedy','Erotic Romance (adult characters)','Erotic Drama (adult characters)','Revenge','Fantasy','Dark Fantasy','Urban Fantasy','High Fantasy','Horror','Gothic Horror','Psychological Thriller','Thriller','Mystery','Cozy Mystery','Crime','Detective','Comedy','Satire','Melodrama','Action','Sci-fi','Cyberpunk','Dystopian','Post-Apocalyptic','Historical Drama','Mythology','Superhero','Political Intrigue','Survival','Medical Drama','Legal Drama','Sports Drama','Slice of Life','Found Family','Cultivation / Xianxia','Wuxia / Martial Arts','Xuanhuan','Isekai / Otherworld','Reincarnation','Regression / Time Loop','Transmigration','LitRPG / System','Dungeon / Tower','GameLit','Otome / Villainess','Gender Bender','Body Swap','BL / Boys’ Love','GL / Girls’ Love','Harem','Reverse Harem','Paranormal Romance','Supernatural','Coming of Age','Family Saga','Workplace Drama','War Drama','Adventure'];
 const moods=['Emotional','Dark','Hopeful','Chaotic','Suspenseful','Funny','Epic','Gritty'];
 function save(){localStorage.setItem(KEY,JSON.stringify(projects))}
 function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
