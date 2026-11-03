@@ -28,6 +28,17 @@ button:active{transform:scale(.985)}.actions{display:flex;gap:9px;flex-wrap:wrap
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.card{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:15px;min-width:0}.card h4{margin:0 0 7px;font-size:15px}.card p{margin:0;color:var(--muted);font-size:13px;overflow-wrap:anywhere}.card .meta{font-size:11px;color:var(--accent);margin-bottom:8px}.card-actions{display:flex;gap:7px;margin-top:13px}.card-actions button{flex:1;padding:9px 7px;font-size:12px}
 form{display:grid;gap:13px}.field{display:grid;gap:6px}.field label{color:#d4d1e2;font-size:12px;font-weight:700}.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);background:#101019;color:var(--text);padding:12px;border-radius:11px;outline:none}.field textarea{min-height:95px;resize:vertical}.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--accent)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.notice{padding:12px 13px;background:#1d2b26;border:1px solid #304d40;color:#c9f1d9;border-radius:12px;font-size:12px}.warning{background:#2d261a;border-color:#51422b;color:#f4dfad}
+
+.genre-picker{border:1px solid var(--line);background:#11111b;border-radius:13px;padding:12px}
+.genre-tools{display:grid;gap:8px;margin-bottom:10px}
+.genre-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:230px;overflow:auto;padding:2px}
+.genre-option{display:flex;align-items:center;gap:7px;padding:8px;background:#1b1b28;border:1px solid #303043;border-radius:9px;font-size:12px;color:#e8e5f2}
+.genre-option input{width:auto;accent-color:#b9a2ff}
+.genre-selected{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.genre-chip{background:#302743;color:#d9caff;border:1px solid #51416f;border-radius:99px;padding:5px 9px;font-size:11px}
+.genre-help{font-size:11px;color:var(--muted);margin:6px 0 0}
+@media(max-width:380px){.genre-list{grid-template-columns:1fr}}
+
 .empty{padding:28px 18px;text-align:center;border:1px dashed #454257;border-radius:17px;color:var(--muted)}.empty b{display:block;color:var(--text);margin-bottom:5px}
 .output{white-space:pre-wrap;overflow-wrap:anywhere;background:#101019;border:1px solid var(--line);border-radius:13px;padding:15px;font-size:13px;line-height:1.65;max-height:none}
 .list{display:grid;gap:10px}.project{display:flex;align-items:flex-start;gap:12px}.project-icon{width:43px;height:48px;flex-shrink:0;border-radius:11px;background:linear-gradient(145deg,#302543,#20202d);display:grid;place-items:center;font-size:20px}.project-main{flex:1;min-width:0}.project-main h4{margin:0 0 4px}.project-main p{margin:0;color:var(--muted);font-size:12px}.tag{display:inline-block;margin-top:8px;padding:4px 7px;border-radius:7px;background:#29223a;color:var(--accent);font-size:10px}
@@ -50,7 +61,7 @@ footer{color:#77768a;text-align:center;font-size:11px;margin-top:24px}
   <button class="tab" data-page="library"><span>☷</span>Library</button>
 </nav>
 <main id="main"></main>
-<footer>Prototype 0.2 · Expanded genres · Your saved projects stay on this device. Generated text is a starter draft, not a connected AI model yet.</footer>
+<footer>Prototype 0.3 · Unlimited genre combinations · Your saved projects stay on this device. Generated text is a starter draft, not a connected AI model yet.</footer>
 </div>
 <div class="modal" id="modal"><div class="sheet"><div class="sheet-head"><h3 id="modalTitle">Details</h3><button class="close" id="closeModal" aria-label="Close">×</button></div><div id="modalBody"></div></div></div>
 <script>
@@ -58,13 +69,63 @@ const KEY='dramaforge_projects_v1';
 const $=s=>document.querySelector(s);
 let page='home', activeProject=null;
 let projects=[];
-try{projects=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){projects=[]}
+try{projects=JSON.parse(localStorage.getItem(KEY)||'[]');projects=projects.map(p=>({...p,genres:Array.isArray(p.genres)&&p.genres.length?p.genres:(p.genre?[p.genre]:['Drama']),primaryGenre:p.primaryGenre||p.genre||'Drama'}))}catch(e){projects=[]}
 const genres=['Romance','Romantic Comedy','Erotic Romance (adult characters)','Erotic Drama (adult characters)','Revenge','Fantasy','Dark Fantasy','Urban Fantasy','High Fantasy','Horror','Gothic Horror','Psychological Thriller','Thriller','Mystery','Cozy Mystery','Crime','Detective','Comedy','Satire','Melodrama','Action','Sci-fi','Cyberpunk','Dystopian','Post-Apocalyptic','Historical Drama','Mythology','Superhero','Political Intrigue','Survival','Medical Drama','Legal Drama','Sports Drama','Slice of Life','Found Family','Cultivation / Xianxia','Wuxia / Martial Arts','Xuanhuan','Isekai / Otherworld','Reincarnation','Regression / Time Loop','Transmigration','LitRPG / System','Dungeon / Tower','GameLit','Otome / Villainess','Gender Bender','Body Swap','BL / Boys’ Love','GL / Girls’ Love','Harem','Reverse Harem','Paranormal Romance','Supernatural','Coming of Age','Family Saga','Workplace Drama','War Drama','Adventure'];
 const moods=['Emotional','Dark','Hopeful','Chaotic','Suspenseful','Funny','Epic','Gritty'];
+
+function genrePickerMarkup(prefix, selected, primary){
+ const chosen=Array.isArray(selected)&&selected.length?selected:(selected?[selected]:[]);
+ const all=[...new Set([...genres,...chosen])];
+ return `<div class="genre-picker" id="${prefix}Picker">
+  <div class="genre-tools">
+   <input id="${prefix}Search" type="search" placeholder="Search genres…" aria-label="Search genres">
+   <div class="two"><input id="${prefix}Custom" type="text" maxlength="50" placeholder="Add your own genre"><button type="button" class="secondary" id="${prefix}Add">＋ Add genre</button></div>
+  </div>
+  <div class="genre-list" id="${prefix}List">${all.map(g=>`<label class="genre-option" data-genre="${esc(g.toLowerCase())}"><input type="checkbox" value="${esc(g)}" ${chosen.includes(g)?'checked':''}>${esc(g)}</label>`).join('')}</div>
+  <div class="genre-selected" id="${prefix}Chips"></div>
+  <div class="field"><label for="${prefix}Primary">Primary genre</label><select id="${prefix}Primary"><option value="${esc(primary||chosen[0]||"")}" selected>${esc(primary||chosen[0]||"")}</option></select></div>
+  <p class="genre-help">Select unlimited genres. Your primary genre leads the story; the others add flavor and subplots.</p>
+ </div>`;
+}
+function bindGenrePicker(prefix){
+ const list=document.getElementById(prefix+'List');if(!list)return;
+ const search=document.getElementById(prefix+'Search'),custom=document.getElementById(prefix+'Custom'),add=document.getElementById(prefix+'Add'),primary=document.getElementById(prefix+'Primary');
+ const refresh=()=>{
+  const selected=[...list.querySelectorAll('input[type="checkbox"]:checked')].map(x=>x.value), previous=primary.value;
+  primary.innerHTML=selected.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('');
+  if(selected.includes(previous))primary.value=previous;else if(selected.length)primary.value=selected[0];
+  document.getElementById(prefix+'Chips').innerHTML=selected.map(g=>`<span class="genre-chip">${esc(g)}${g===primary.value?' ★':''}</span>`).join('');
+ };
+ list.addEventListener('change',refresh);
+ primary.addEventListener('change',refresh);
+ search.addEventListener('input',()=>{
+  const q=search.value.trim().toLowerCase();
+  list.querySelectorAll('.genre-option').forEach(label=>label.style.display=label.dataset.genre.includes(q)?'flex':'none');
+ });
+ add.addEventListener('click',()=>{
+  const value=custom.value.trim();if(!value)return;
+  let checkbox=[...list.querySelectorAll('input[type="checkbox"]')].find(x=>x.value.toLowerCase()===value.toLowerCase());
+  if(!checkbox){
+   const label=document.createElement('label');label.className='genre-option';label.dataset.genre=value.toLowerCase();
+   checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.value=value;checkbox.checked=true;
+   label.append(checkbox,document.createTextNode(value));list.appendChild(label);
+  }else checkbox.checked=true;
+  custom.value='';refresh();
+ });
+ refresh();
+}
+function getGenreSelection(prefix){
+ const list=document.getElementById(prefix+'List');
+ const selected=list?[...list.querySelectorAll('input[type="checkbox"]:checked')].map(x=>x.value):[];
+ const primary=document.getElementById(prefix+'Primary');
+ return {selected,primary:primary&&selected.includes(primary.value)?primary.value:(selected[0]||'Drama')};
+}
+
 function save(){localStorage.setItem(KEY,JSON.stringify(projects))}
 function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function dateLabel(t){return new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric'})}
-function projectCard(p){return `<article class="card"><div class="meta">${esc(p.genre||'Drama')} · ${dateLabel(p.updated||p.created)}</div><h4>${esc(p.title)}</h4><p>${esc(p.logline||'No logline yet.')}</p><div class="card-actions"><button class="secondary" onclick="openProject('${p.id}')">Open</button><button class="ghost" onclick="deleteProject('${p.id}')">Delete</button></div></article>`}
+function projectGenres(p){return Array.isArray(p.genres)&&p.genres.length?p.genres:(p.genre?[p.genre]:['Drama'])}
+function projectCard(p){return `<article class="card"><div class="meta">${esc(projectGenres(p).join(' · '))} · ${dateLabel(p.updated||p.created)}</div><h4>${esc(p.title)}</h4><p>${esc(p.logline||'No logline yet.')}</p><div class="card-actions"><button class="secondary" onclick="openProject('${p.id}')">Open</button><button class="ghost" onclick="deleteProject('${p.id}')">Delete</button></div></article>`}
 function setPage(next){page=next;document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.page===page));render()}
 function render(){
  const main=$('#main');
@@ -80,10 +141,10 @@ function render(){
   main.innerHTML=`<div class="section-head"><h3>Create a drama</h3><small>Step 1 of your production pipeline</small></div><div class="notice warning">This first version creates and saves a structured draft locally. Live AI generation will be connected in a later version.</div><br>
   <form id="createForm"><div class="field"><label for="title">Drama title</label><input id="title" required maxlength="80" placeholder="e.g. The Heir's Last Secret"></div>
   <div class="field"><label for="premise">Your idea / premise</label><textarea id="premise" required maxlength="2000" placeholder="A disgraced heir returns to a city that believes them dead..."></textarea></div>
-  <div class="two"><div class="field"><label for="genre">Genre</label><select id="genre">${genres.map(x=>`<option>${x}</option>`).join('')}</select></div><div class="field"><label for="mood">Tone</label><select id="mood">${moods.map(x=>`<option>${x}</option>`).join('')}</select></div></div>
+  <div class="field"><label>Genres — select as many as you like</label>${genrePickerMarkup("createGenre",["Romance"],"Romance")}</div><div class="field"><label for="mood">Tone</label><select id="mood">${moods.map(x=>`<option>${x}</option>`).join('')}</select></div>
   <div class="two"><div class="field"><label for="episodes">Episode count</label><select id="episodes">${[3,5,10,20,30].map(x=>`<option value="${x}" ${x===5?'selected':''}>${x} episodes</option>`).join('')}</select></div><div class="field"><label for="length">Episode length</label><select id="length"><option value="30–60 seconds">30–60 seconds</option><option value="1–3 minutes">1–3 minutes</option><option value="3–5 minutes">3–5 minutes</option><option value="10+ minutes">10+ minutes</option></select></div></div>
   <button class="primary" type="submit">✦ Generate starter pack</button></form>`;
-  $('#createForm').addEventListener('submit',createProject);
+  $('#createForm').addEventListener('submit',createProject);bindGenrePicker('createGenre');
  }else if(page==='library'){
   main.innerHTML=`<div class="section-head"><h3>Creative library</h3><small>Reusable writing tools</small></div><div class="grid">
   <div class="card"><div class="meta">PROMPT TOOL</div><h4>Drama premise expander</h4><p>Use a simple structure to strengthen an idea.</p><div class="card-actions"><button class="secondary" onclick="showPrompt('premise')">Open tool</button></div></div>
@@ -97,8 +158,9 @@ function render(){
 }
 function createProject(e){
  e.preventDefault();
- const title=$('#title').value.trim(), premise=$('#premise').value.trim(), genre=$('#genre').value, mood=$('#mood').value, count=Number($('#episodes').value), length=$('#length').value;
- const p={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),title,premise,genre,mood,count,length,created:Date.now(),updated:Date.now(),logline:premise.slice(0,150),characters:[],episodes:[]};
+ const title=$('#title').value.trim(), premise=$('#premise').value.trim(), selection=getGenreSelection('createGenre'), genre=selection.primary, mood=$('#mood').value, count=Number($('#episodes').value), length=$('#length').value;
+ if(!selection.selected.length){alert('Choose at least one genre.');return}
+ const p={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),title,premise,genre,genres:selection.selected,primaryGenre:selection.primary,mood,count,length,created:Date.now(),updated:Date.now(),logline:premise.slice(0,150),characters:[],episodes:[]};
  p.story=makeStory(p);projects.unshift(p);save();activeProject=p.id;openProject(p.id);
 }
 function makeStory(p){
@@ -115,20 +177,22 @@ function makeStory(p){
  'The protagonist discovers the conflict is larger than they imagined.',
  'A final revelation reframes the opening scene and launches the next chapter.'
  ];
- let out=`${p.title.toUpperCase()} — STARTER STORY PACK\n\nGENRE: ${p.genre}\nTONE: ${p.mood}\nFORMAT: ${n} episodes · ${p.length} each\n\nCORE PREMISE\n${p.premise}\n\nSERIES ENGINE\nEach episode should move the central conflict forward, reveal a new piece of character information, and end on a strong emotional or plot question. Keep the main characters' goals and visual traits consistent.\n\nEPISODE OUTLINE\n`;
- for(let i=1;i<=n;i++){let hook=hooks[(i-1)%hooks.length];out+=`\nEPISODE ${i}: ${episodeTitle(i,p.genre)}\n• Opening hook: Start with a striking image, urgent decision, or unanswered question.\n• Escalation: The premise creates a concrete obstacle for the protagonist.\n• Character beat: Reveal a desire, fear, contradiction, or relationship shift.\n• Turn: ${hook}\n• Cliffhanger: End on a new danger, a revelation, or a choice that cannot be undone.\n`}
+ let out=`${p.title.toUpperCase()} — STARTER STORY PACK\n\nPRIMARY GENRE: ${p.primaryGenre||p.genre}\nGENRE COMBINATION: ${projectGenres(p).join(' + ')}\nTONE: ${p.mood}\nFORMAT: ${n} episodes · ${p.length} each\n\nCORE PREMISE\n${p.premise}\n\nSERIES ENGINE\nEach episode should move the central conflict forward, reveal a new piece of character information, and end on a strong emotional or plot question. Keep the main characters' goals and visual traits consistent.\n\nEPISODE OUTLINE\n`;
+ for(let i=1;i<=n;i++){let hook=hooks[(i-1)%hooks.length];out+=`\nEPISODE ${i}: ${episodeTitle(i,p.primaryGenre||p.genre)}\n• Opening hook: Start with a striking image, urgent decision, or unanswered question.\n• Escalation: The premise creates a concrete obstacle for the protagonist.\n• Character beat: Reveal a desire, fear, contradiction, or relationship shift.\n• Turn: ${hook}\n• Cliffhanger: End on a new danger, a revelation, or a choice that cannot be undone.\n`}
  out+=`\nVISUAL DIRECTION\n• Aspect ratio: 9:16 vertical for mobile-first drama.\n• Use readable close-ups, clear eyelines, simple geography, and motivated camera moves.\n• Repeat character descriptions and wardrobe details in every visual prompt to improve consistency.\n• Keep dialogue concise and let reaction shots carry emotional beats.\n\nNEXT STEP\nAdd your main characters in the project editor, then expand each episode into 3–8 individual scenes. This is a template-based starter draft; connect a language model for truly customized AI-written material.`;
  return out;
 }
 function episodeTitle(i,g){const titles=['The Unexpected Return','A Promise in the Dark','The Price of Trust','A Door Left Open','The Hidden Witness','A Dangerous Offer','Blood and Secrets','The False Victory','No Way Back','The Truth Beneath'];return titles[(i-1)%titles.length]}
 function openProject(id){
  const p=projects.find(x=>x.id===id);if(!p)return;activeProject=id;
- showModal(p.title,`<div class="meta">${esc(p.genre)} · ${p.count} episodes · ${esc(p.length)}</div><div class="field"><label>Premise</label><textarea id="editPremise">${esc(p.premise)}</textarea></div><div class="two"><div class="field"><label>Genre</label><select id="editGenre">${genres.map(x=>`<option ${x===p.genre?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><label>Tone</label><select id="editMood">${moods.map(x=>`<option ${x===p.mood?'selected':''}>${x}</option>`).join('')}</select></div></div>
+ const existingGenres=projectGenres(p), primary=p.primaryGenre||p.genre||existingGenres[0];
+ showModal(p.title,`<div class="meta">${esc(existingGenres.join(' · '))} · ${p.count} episodes · ${esc(p.length)}</div><div class="field"><label>Premise</label><textarea id="editPremise">${esc(p.premise)}</textarea></div><div class="field"><label>Genres — unlimited selections</label>${genrePickerMarkup("editGenre",existingGenres,primary)}</div><div class="field"><label for="editMood">Tone</label><select id="editMood">${moods.map(x=>`<option ${x===p.mood?'selected':''}>${x}</option>`).join('')}</select></div>
  <div class="actions" style="margin:13px 0"><button class="primary" onclick="saveProjectEdits('${p.id}')">Save details</button><button class="secondary" onclick="showStory('${p.id}')">View story pack</button><button class="secondary" onclick="addCharacter('${p.id}')">＋ Character</button><button class="secondary" onclick="addEpisode('${p.id}')">＋ Episode note</button><button class="ghost" onclick="downloadStory('${p.id}')">Export .txt</button></div>
  <div class="section-head"><h3>Characters (${(p.characters||[]).length})</h3></div>${(p.characters||[]).length?p.characters.map((c,i)=>`<div class="card" style="margin-bottom:8px"><h4>${esc(c.name)}</h4><p>${esc(c.description)}</p><span class="tag">${esc(c.role||'Character')}</span><button class="ghost" style="float:right;padding:5px 8px" onclick="removeCharacter('${p.id}',${i})">Remove</button></div>`).join(''):'<p style="color:var(--muted)">No characters yet. Add your first character.</p>'}
  <div class="section-head"><h3>Episode notes (${(p.episodes||[]).length})</h3></div>${(p.episodes||[]).length?p.episodes.map((ep,i)=>`<div class="card" style="margin-bottom:8px"><h4>Episode ${i+1}: ${esc(ep.title)}</h4><p>${esc(ep.note)}</p></div>`).join(''):'<p style="color:var(--muted)">Add notes for individual episodes as you develop them.</p>'}`);
+ bindGenrePicker('editGenre');
 }
-function saveProjectEdits(id){const p=projects.find(x=>x.id===id);if(!p)return;p.premise=$('#editPremise').value.trim();p.logline=p.premise.slice(0,150);p.genre=$('#editGenre').value;p.mood=$('#editMood').value;p.updated=Date.now();p.story=makeStory(p);save();openProject(id)}
+function saveProjectEdits(id){const p=projects.find(x=>x.id===id);if(!p)return;const selection=getGenreSelection('editGenre');if(!selection.selected.length){alert('Choose at least one genre.');return}p.premise=$('#editPremise').value.trim();p.logline=p.premise.slice(0,150);p.genres=selection.selected;p.primaryGenre=selection.primary;p.genre=selection.primary;p.mood=$('#editMood').value;p.updated=Date.now();p.story=makeStory(p);save();openProject(id)}
 function showStory(id){const p=projects.find(x=>x.id===id);if(!p)return;showModal('Story pack',`<div class="actions" style="margin-bottom:12px"><button class="primary" onclick="downloadStory('${id}')">Download .txt</button><button class="secondary" onclick="copyText('${id}')">Copy text</button></div><div class="output">${esc(p.story||makeStory(p))}</div>`)}
 function addCharacter(id){const p=projects.find(x=>x.id===id);if(!p)return;showModal('Add character',`<form id="charForm"><div class="field"><label>Name</label><input id="charName" required maxlength="80" placeholder="Character name"></div><div class="field"><label>Role</label><select id="charRole"><option>Protagonist</option><option>Antagonist</option><option>Love interest</option><option>Ally</option><option>Rival</option><option>Supporting character</option></select></div><div class="field"><label>Description, goal, secret, or visual traits</label><textarea id="charDesc" required placeholder="What do they want? What are they hiding? What do they look like?"></textarea></div><button class="primary" type="submit">Save character</button></form>`);$('#charForm').addEventListener('submit',e=>{e.preventDefault();p.characters.push({name:$('#charName').value.trim(),role:$('#charRole').value,description:$('#charDesc').value.trim()});p.updated=Date.now();save();openProject(id)})}
 function addEpisode(id){const p=projects.find(x=>x.id===id);if(!p)return;showModal('Add episode note',`<form id="epForm"><div class="field"><label>Episode title</label><input id="epTitle" required placeholder="The Secret Comes Out"></div><div class="field"><label>Scene beats / notes</label><textarea id="epNote" required placeholder="Opening hook, conflict, turning point, cliffhanger..."></textarea></div><button class="primary" type="submit">Save episode note</button></form>`);$('#epForm').addEventListener('submit',e=>{e.preventDefault();p.episodes.push({title:$('#epTitle').value.trim(),note:$('#epNote').value.trim()});p.updated=Date.now();save();openProject(id)})}
