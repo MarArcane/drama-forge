@@ -52,7 +52,7 @@ footer{color:#77768a;text-align:center;font-size:11px;margin-top:24px}
 <body>
 <div class="app">
 <header>
-  <div class="brand"><div class="logo">▶</div><div><h1>DramaForge</h1><p>Mobile AI drama studio · Prototype</p></div></div>
+  <div class="brand"><div class="logo">▶</div><div><h1>DramaForge</h1><p>Mobile story creation studio · Prototype</p></div></div>
   <span class="pill">BETA · LOCAL SAVE</span>
 </header>
 <nav class="tabs" aria-label="Main navigation">
@@ -60,15 +60,16 @@ footer{color:#77768a;text-align:center;font-size:11px;margin-top:24px}
   <button class="tab" data-page="projects"><span>▣</span>Projects</button>
   <button class="tab" data-page="create"><span>✦</span>Create</button>
   <button class="tab" data-page="bible"><span>✧</span>Bible</button>
+  <button class="tab" data-page="generator"><span>✦</span>Generator</button>
   <button class="tab" data-page="library"><span>☷</span>Library</button>
 </nav>
 <main id="main"></main>
-<footer>Prototype 0.5 · Story Bible and Worldbuilding · Your saved projects stay on this device. Generated text is a starter draft, not a connected AI model yet.</footer>
+<footer>Prototype 0.6 · Story Bible + Story Generator · Local drafts and templates; no live AI connection yet.</footer>
 </div>
 <div class="modal" id="modal"><div class="sheet"><div class="sheet-head"><h3 id="modalTitle">Details</h3><button class="close" id="closeModal" aria-label="Close">×</button></div><div id="modalBody"></div></div></div>
 <script>
 const KEY='dramaforge_projects_v1';
-const APP_VERSION='0.5';
+const APP_VERSION='0.6';
 const $=s=>document.querySelector(s);
 let page='home', activeProject=null, episodeLimit=50;
 let projects=[];
@@ -153,6 +154,26 @@ function render(){
  ${projects.length?`<div class="field"><label>Choose a project</label><select id="bibleProject">${projects.map(p=>`<option value="${esc(p.id)}">${esc(p.title)}</option>`).join('')}</select></div>
  <div class="actions"><button class="primary" onclick="openBible($('#bibleProject').value)">Open Story Bible</button><button class="secondary" onclick="exportBible($('#bibleProject').value)">Export Bible JSON</button></div>`:
  `<div class="empty"><b>Create a project first</b>Each project has its own Story Bible.</div>`}`;
+ }else if(page==='generator'){
+  main.innerHTML=`<div class="section-head"><h3>Story Generator</h3><small>Build drafts using your Story Bible</small></div>
+  <div class="notice warning">Prototype mode: this creates structured writing scaffolds from your saved project information. It is not connected to an AI model, so it will not independently write finished prose yet.</div>
+  ${projects.length?`<div class="card">
+   <div class="field"><label for="genProject">Choose project</label><select id="genProject">${projects.map(p=>`<option value="${esc(p.id)}">${esc(p.title)}</option>`).join('')}</select></div>
+   <div class="field"><label for="genType">What do you want to develop?</label><select id="genType">
+    <option value="concept">Story concept / premise development</option>
+    <option value="season">Season outline</option>
+    <option value="episodes">Episode-by-episode outline</option>
+    <option value="scenes">Scene breakdown</option>
+    <option value="script">Episode script draft</option>
+    <option value="arcs">Character arcs & subplots</option>
+   </select></div>
+   <div class="field"><label for="genDetails">Your instructions / focus</label><textarea id="genDetails" maxlength="3000" placeholder="What should happen? Which characters, conflicts, themes, or reveals should be emphasized?"></textarea></div>
+   <div class="two"><div class="field"><label for="genSeason">Season / arc name (optional)</label><input id="genSeason" maxlength="100" placeholder="e.g. The Shattered Crown"></div><div class="field"><label for="genEpisode">Episode number (optional)</label><input id="genEpisode" type="number" min="1" max="1000" placeholder="e.g. 1"></div></div>
+   <button class="primary" onclick="generateStoryDraft()">✦ Build draft scaffold</button>
+  </div>
+  <div class="card" style="margin-top:14px"><div class="section-head"><h3>Generated draft</h3><button class="secondary" onclick="copyGeneratorDraft()">Copy</button></div>
+   <textarea id="genOutput" rows="18" placeholder="Your structured draft will appear here. You can edit and copy it into your episode planner." style="min-height:300px"></textarea>
+  </div>`:`<div class="empty"><b>Create a project first</b>The Story Generator uses each project's premise, characters, episodes, and Story Bible.</div>`}`;
  }else if(page==='library'){
   main.innerHTML=`<div class="section-head"><h3>Creative library</h3><small>Reusable writing tools</small></div><div class="grid">
   <div class="card"><div class="meta">PROMPT TOOL</div><h4>Drama premise expander</h4><p>Use a simple structure to strengthen an idea.</p><div class="card-actions"><button class="secondary" onclick="showPrompt('premise')">Open tool</button></div></div>
@@ -289,6 +310,65 @@ function download(name,data,type){const blob=new Blob([data],{type}),url=URL.cre
 function exportData(){download('dramaforge-backup.json',JSON.stringify(projects,null,2),'application/json')}
 function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d))throw Error();projects=d;save();render();alert('Backup restored.')}catch(err){alert('That file is not a valid DramaForge backup.')}};r.readAsText(f)}
 function clearData(){if(!confirm('Permanently clear all DramaForge projects stored in this browser? Export a backup first if needed.'))return;projects=[];save();render()}
+
+function generatorProject(){
+ const id=$('#genProject')?.value;
+ const p=projects.find(x=>x.id===id);
+ if(!p)return null;
+ ensureProjectShape(p);
+ return p;
+}
+function generatorBibleContext(p){
+ const b=p.bible||{};
+ const lines=[];
+ if(b.overview)lines.push('WORLD / STORY OVERVIEW:\n'+b.overview);
+ if(b.canonRules)lines.push('NON-NEGOTIABLE CANON:\n'+b.canonRules);
+ const charList=(p.characters||[]).map(c=>`${c.name||'Unnamed'} — ${c.role||'Character'}; ${c.description||c.bio||''}`).join('\n');
+ if(charList)lines.push('PROJECT CHARACTERS:\n'+charList);
+ for(const key of ['characters','locations','factions','lore','relationships','timeline']){
+  const arr=b[key]||[];
+  if(arr.length)lines.push(key.toUpperCase()+':\n'+arr.map(e=>`${e.name||'Untitled'}: ${e.details||''}${e.date?' ('+e.date+')':''}`).join('\n'));
+ }
+ return lines.join('\n\n')||'No Story Bible details have been added yet.';
+}
+function generateStoryDraft(){
+ const p=generatorProject();if(!p){alert('Choose a project first.');return}
+ const type=$('#genType').value, brief=$('#genDetails').value.trim();
+ const season=$('#genSeason').value.trim()||'Untitled Season / Arc';
+ const epNo=Math.max(1,Math.min(1000,Number($('#genEpisode').value)||1));
+ const context=generatorBibleContext(p);
+ const title=p.title||'Untitled Project';
+ const premise=p.premise||p.logline||'Premise not yet written.';
+ let out=`DRAMAFORGE STORY GENERATOR · WORKING DRAFT\nPROJECT: ${title}\nGENRE: ${projectGenres(p).join(', ')}\nTONE: ${p.mood||'Not specified'}\n\nPREMISE:\n${premise}\n\n`;
+ if(brief)out+=`CREATOR'S DIRECTION:\n${brief}\n\n`;
+ out+=`STORY BIBLE CONTEXT:\n${context}\n\n`;
+ const add=(heading,body)=>{out+=`${heading}\n${body}\n\n`};
+ if(type==='concept'){
+  add('CORE STORY CONCEPT',`Central dramatic question: [What question drives the entire series?]\nProtagonist: [Who carries the story?]\nExternal goal: [What do they want to achieve?]\nInternal need: [What must they learn or confront?]\nPrimary opposition: [Who or what prevents success?]\nStakes: [What is lost if they fail?]\nUnique hook: [What makes this story distinct?]`);
+  add('CONCEPT DEVELOPMENT',`Opening situation: [Establish the world and protagonist]\nInciting incident: [The event that changes everything]\nFirst major choice: [A choice that commits the protagonist]\nEscalation: [How the conflict grows]\nMidpoint revelation: [A truth that changes the direction]\nCrisis: [The hardest consequence]\nSeason / story promise: [What the audience can expect]`);
+ }else if(type==='season'){
+  add(`SEASON OUTLINE: ${season}`,`Season objective: [What must change by the finale?]\nMain antagonist / opposing force: [Define the pressure]\nCentral conflict: [The season-long problem]\nEmotional throughline: [The key relationship or personal struggle]\nBeginning state: [Where the characters start]\nFinale state: [Where they end]`);
+  add('SEASON BEATS',Array.from({length:8},(_,i)=>`${i+1}. ${['Opening image and status quo','Inciting incident','First commitment / point of no return','Complications and rising cost','Mid-season reversal or revelation','Lowest point / major loss','Final plan and decisive confrontation','Finale, consequences, and next hook'][i]}: [Develop this beat using canon and character motivations]`).join('\n'));
+ }else if(type==='episodes'){
+  const start=epNo;
+  add('EPISODE OUTLINE',Array.from({length:10},(_,i)=>`EPISODE ${start+i}: [Title]\n- Purpose in the larger story: [ ]\n- Opening hook: [ ]\n- Main plot: [ ]\n- Character / relationship movement: [ ]\n- Key reveal or reversal: [ ]\n- Ending hook / cliffhanger: [ ]`).join('\n\n'));
+ }else if(type==='scenes'){
+  add(`SCENE BREAKDOWN · EPISODE ${epNo}`,Array.from({length:8},(_,i)=>`SCENE ${i+1} · [INT./EXT. — LOCATION — TIME]\nCharacters present: [ ]\nScene goal: [What does the viewpoint character want?]\nConflict: [Who or what resists?]\nAction / turning point: [What changes?]\nEmotional beat: [What is felt but not necessarily said?]\nExit hook: [Why must the audience continue?]`).join('\n\n'));
+ }else if(type==='script'){
+  add(`EPISODE ${epNo} · SCRIPT DRAFT`, `COLD OPEN\n[Opening image, action, or line that creates immediate curiosity]\n\nSCENE 1 — [LOCATION / TIME]\n[Action and visual direction]\nCHARACTER: [Dialogue]\nCHARACTER: [Dialogue]\n\nSCENE 2 — [LOCATION / TIME]\n[Escalate the conflict; reveal character through choices]\n\nSCENE 3 — [LOCATION / TIME]\n[Complication or reversal]\n\nCLIMAX\n[The decisive choice, confrontation, or revelation]\n\nENDING / CLIFFHANGER\n[Close the episode's question while opening the next one]\n\nCONTINUITY CHECK\n- Character knowledge changes: [ ]\n- Injuries / objects / locations to track: [ ]\n- Plot threads advanced: [ ]`);
+ }else if(type==='arcs'){
+  add('CHARACTER ARC',`Character: [Name]\nStarting belief / flaw: [ ]\nWant: [ ]\nNeed: [ ]\nFear / wound: [ ]\nPressure that forces change: [ ]\nKey choices: [ ]\nLowest point: [ ]\nFinal transformation (or refusal to change): [ ]`);
+  add('SUBPLOT DESIGN',`Subplot character(s): [ ]\nConnection to main plot: [ ]\nIndependent conflict: [ ]\nKey turning points: [ ]\nHow it complicates the main story: [ ]\nResolution / future hook: [ ]`);
+ }
+ add('CONTINUITY & CANON CHECK',`Before accepting this draft, verify:\n1. It does not contradict the non-negotiable canon rules.\n2. Character decisions match established motivations, knowledge, and relationships.\n3. Timeline, ages, locations, abilities, and world rules remain consistent.\n4. Existing episode events and unresolved plot threads are respected.\n5. Any new fact that becomes canon is added to the Story Bible.`);
+ $('#genOutput').value=out;
+}
+function copyGeneratorDraft(){
+ const field=$('#genOutput');if(!field||!field.value.trim()){alert('Generate a draft first.');return}
+ field.select();
+ try{document.execCommand('copy');alert('Draft copied.')}catch(e){alert('Select the draft and copy it manually.')}
+}
+
 function showModal(title,body){$('#modalTitle').textContent=title;$('#modalBody').innerHTML=body;$('#modal').classList.add('show')}
 function closeModal(){$('#modal').classList.remove('show')}
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>setPage(b.dataset.page)));
